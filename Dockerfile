@@ -13,18 +13,6 @@ ENV GAME_NAME "Game Name"
 RUN pacman -Syu --noconfirm && \
   pacman -S jdk11-openjdk jdk17-openjdk unzip imagemagick --noconfirm
 
-# Install Android Command-line tools
-RUN curl https://dl.google.com/android/repository/commandlinetools-linux-${SDK_VERSION}.zip --output cmdline-tools.zip && \
-  unzip cmdline-tools.zip && \
-  mkdir -p /android-sdk/cmdline-tools && \
-  mv cmdline-tools /android-sdk/cmdline-tools/latest && \
-  rm cmdline-tools.zip
-
-# Install Android SDK
-WORKDIR /android-sdk/cmdline-tools/latest/bin
-RUN archlinux-java set java-17-openjdk  && \
-  echo "y" | ./sdkmanager --install "build-tools;29.0.3" "platform-tools" "platforms;android-29" "tools" "ndk-bundle"
-
 # Copy OpenBOR repository
 COPY openbor /openbor
 
@@ -32,9 +20,17 @@ COPY openbor /openbor
 WORKDIR /openbor/engine
 RUN ./version.sh
 
-# Reduce build time in futher builds
-WORKDIR /openbor/engine/android
-RUN archlinux-java set java-11-openjdk && \
+# Install Android Command-line tools
+WORKDIR /
+RUN curl https://dl.google.com/android/repository/commandlinetools-linux-${SDK_VERSION}.zip --output /cmdline-tools.zip && \
+  unzip cmdline-tools.zip && \
+  mkdir -p /android-sdk/cmdline-tools && \
+  mv cmdline-tools /android-sdk/cmdline-tools/latest && \
+  cd /android-sdk/cmdline-tools/latest/bin && \
+  archlinux-java set java-17-openjdk && \
+  echo "y" | ./sdkmanager --install "build-tools;29.0.3" "platform-tools" "platforms;android-29" "tools" "ndk-bundle" && \
+  cd /openbor/engine/android && \
+  archlinux-java set java-11-openjdk && \
   keytool -genkey -noprompt -v \
     -keystore game_certificate.jks \
     -storepass 123456 \
@@ -44,15 +40,16 @@ RUN archlinux-java set java-11-openjdk && \
     -dname "CN=gamename.mycompany.com, OU=O, O=O, L=O, S=O, C=US" && \
   printf "storePassword=123456\nkeyPassword=123456\nkeyAlias=a\nstoreFile=/openbor/engine/android/game_certificate.jks\n" > keystore.properties && \
   ./gradlew assembleRelease && \
-  rm keystore.properties game_certificate.jks /openbor/engine/android/app/build/outputs/apk/release/OpenBOR.apk
-
-# Remove icons
-RUN rm /openbor/engine/android/app/src/main/res/drawable-hdpi/icon.png && \
+  rm keystore.properties game_certificate.jks /openbor/engine/android/app/build/outputs/apk/release/OpenBOR.apk && \
+  rm /openbor/engine/android/app/src/main/res/drawable-hdpi/icon.png && \
   rm /openbor/engine/android/app/src/main/res/drawable-ldpi/icon.png && \
-  rm /openbor/engine/android/app/src/main/res/drawable-mdpi/icon.png
+  rm /openbor/engine/android/app/src/main/res/drawable-mdpi/icon.png && \
+  rm /cmdline-tools.zip && \
+  rm -R /android-sdk
 
 # Volumes
 RUN mkdir /output
+VOLUME /android-sdk
 VOLUME /game_certificate.jks
 VOLUME /bor.pak
 VOLUME /icon.png
