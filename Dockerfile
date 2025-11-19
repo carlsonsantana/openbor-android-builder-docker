@@ -1,4 +1,4 @@
-FROM archlinux:base-devel-20230921.0.180222
+FROM archlinux:base-devel-20251019.0.436919
 
 # Environment variables
 ENV SDK_VERSION "9477386_latest"
@@ -22,7 +22,7 @@ RUN rm cmdline-tools.zip
 # Install Android SDK
 WORKDIR /android-sdk/cmdline-tools/latest/bin
 RUN archlinux-java set java-17-openjdk
-RUN echo "y" | ./sdkmanager "build-tools;29.0.3" "patcher;v4" "platform-tools" "platforms;android-29" "tools" "ndk-bundle"
+RUN echo "y" | ./sdkmanager --install "build-tools;29.0.3" "platform-tools" "platforms;android-29" "tools" "ndk-bundle"
 
 # Copy OpenBOR repository
 COPY openbor /openbor
