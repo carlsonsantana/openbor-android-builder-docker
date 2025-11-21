@@ -18,7 +18,9 @@ COPY openbor /openbor
 
 # Create version header file
 WORKDIR /openbor/engine
-RUN ./version.sh
+RUN ./version.sh && \
+  sed -i "s|org\.openbor\.engine|aaaa.bbbbb.ccccc|g" /openbor/engine/android/app/build.gradle && \
+  sed -i "s|\"Openbor\"|\"ZZZZZ\"|g" /openbor/engine/android/app/build.gradle
 
 RUN mkdir /apktool && \
   curl -L https://bitbucket.org/iBotPeaches/apktool/downloads/apktool_2.12.1.jar --output /apktool/apktool_2.12.1.jar
