@@ -19,4 +19,4 @@ printf "version: 2.12.1\napkFileName: OpenBOR.apk\nusesFramework:\n  ids:\n  - 1
 cp /bor.pak /openbor-android/assets/bor.pak
 
 # Build an unsigned version of the Android app
-java -jar /apktool/apktool_2.12.1.jar b /openbor-android -o /output/OpenBOR-unsigned.apk
+java -jar /apktool/apktool.jar b /openbor-android -o /output/OpenBOR-unsigned.apk

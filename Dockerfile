@@ -1,7 +1,8 @@
 FROM archlinux:base-devel-20251019.0.436919
 
 # Environment variables
-ENV SDK_VERSION "9477386_latest"
+ARG SDK_VERSION="9477386_latest"
+ARG APKTOOL_VERSION="2.12.1"
 ENV GAME_APK_NAME "com.mycompany.gamename"
 ENV GAME_NAME "Game Name"
 
@@ -19,7 +20,7 @@ RUN ./version.sh && \
   sed -i "s|\"Openbor\"|\"ZZZZZ\"|g" /openbor/engine/android/app/build.gradle
 
 RUN mkdir /apktool && \
-  curl -L https://bitbucket.org/iBotPeaches/apktool/downloads/apktool_2.12.1.jar --output /apktool/apktool_2.12.1.jar
+  curl -L "https://bitbucket.org/iBotPeaches/apktool/downloads/apktool_""$APKTOOL_VERSION"".jar" --output /apktool/apktool.jar
 
 # Install Android Command-line tools
 WORKDIR /
@@ -45,7 +46,7 @@ RUN export ANDROID_SDK_ROOT=/android-sdk && \
   touch /openbor/engine/android/app/src/main/assets/bor.pak && \
   ./gradlew assembleRelease --no-daemon --no-build-cache && \
   archlinux-java set java-17-openjdk && \
-  java -jar /apktool/apktool_2.12.1.jar d /openbor/engine/android/app/build/outputs/apk/release/OpenBOR.apk -o /openbor-android && \
+  java -jar /apktool/apktool.jar d /openbor/engine/android/app/build/outputs/apk/release/OpenBOR.apk -o /openbor-android && \
   rm keystore.properties game_certificate.jks /openbor/engine/android/app/build/outputs/apk/release/OpenBOR.apk && \
   rm /openbor/engine/android/app/src/main/res/drawable-hdpi/icon.png && \
   rm /openbor/engine/android/app/src/main/res/drawable-ldpi/icon.png && \
