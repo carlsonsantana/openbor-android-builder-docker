@@ -6,7 +6,12 @@ ARG APKTOOL_VERSION="2.12.1"
 
 # Install dependencies
 RUN apt update && apt upgrade -y && \
-  apt install -y curl unzip openjdk-11-jdk openjdk-17-jdk make
+  apt install -y curl unzip openjdk-11-jdk openjdk-17-jdk make && \
+  apt-get clean -y && \
+  apt-get autoremove -y && \
+  apt-get autoclean -y && \
+  rm -rf /tmp/* && \
+  rm -rf /var/lib/apt/lists/*
 RUN mkdir /apktool && \
   curl -L "https://bitbucket.org/iBotPeaches/apktool/downloads/apktool_""$APKTOOL_VERSION"".jar" --output /apktool/apktool.jar
 
