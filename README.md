@@ -29,4 +29,6 @@ You must mount the following volumes when running the Docker image. These mounts
 ### Environment Variables
 
 * `GAME_APK_NAME` the [Application ID](https://developer.android.com/build/configure-app-module#set-application-id) (e.g., `com.mycompany.mygame`) of your Android game;
-* `GAME_NAME` the name displayed beneath the app icon on the device.
+* `GAME_NAME` the name displayed beneath the app icon on the device;
+* `GAME_VERSION_NAME` the version showed to the user that allows use letters and dots (example: "1.0.0");
+* `GAME_METADATA_SITE` the website showed on the side menu.
