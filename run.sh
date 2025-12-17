@@ -3,12 +3,12 @@
 set -e
 
 # Remove previous apk build
-rm -f /output/openbor.apk
+rm -f /output/openbor-unsigned.apk
 
 # Convert icons
-magick /icon.png -resize 72x72 /openbor-android/res/drawable-hdpi/icon.png
 magick /icon.png -resize 36x36 /openbor-android/res/drawable-ldpi/icon.png
 magick /icon.png -resize 48x48 /openbor-android/res/drawable-mdpi/icon.png
+magick /icon.png -resize 72x72 /openbor-android/res/drawable-hdpi/icon.png
 
 # Rename APK name and application ID
 sed -i "s|ZZZZZ|$GAME_NAME|g" /openbor-android/res/values/strings.xml
@@ -19,4 +19,4 @@ printf "version: 2.12.1\napkFileName: OpenBOR.apk\nusesFramework:\n  ids:\n  - 1
 cp /bor.pak /openbor-android/assets/bor.pak
 
 # Build an unsigned version of the Android app
-java -jar /apktool/apktool.jar b /openbor-android -o /output/OpenBOR-unsigned.apk
+java -jar /apktool/apktool.jar b /openbor-android -o /output/openbor-unsigned.apk
