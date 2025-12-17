@@ -21,7 +21,7 @@ COPY openbor /openbor
 # Create version header file
 WORKDIR /openbor/engine
 RUN /bin/bash ./version.sh && \
-  sed -i "s|org\.openbor\.engine|aaaa.bbbbb.ccccc|g" /openbor/engine/android/app/build.gradle && \
+  sed -i "s|org\.openbor\.engine|aaaaa.bbbbb.ccccc|g" /openbor/engine/android/app/build.gradle && \
   sed -i "s|\"Openbor\"|\"ZZZZZ\"|g" /openbor/engine/android/app/build.gradle
 
 # Create source builder
