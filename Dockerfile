@@ -59,10 +59,11 @@ RUN export ANDROID_SDK_ROOT=/android-sdk && \
 
 
 # Another image with only used resources
-FROM eclipse-temurin:17.0.17_10-jre-alpine-3.22
+FROM eclipse-temurin:17.0.17_10-jdk-alpine-3.23
 
 # Install dependencies
-RUN apk --update --no-cache add imagemagick
+RUN apk --update --no-cache add imagemagick abseil-cpp-hash gtest libprotobuf && \
+  apk --update --no-cache add android-build-tools --repository=http://dl-cdn.alpinelinux.org/alpine/edge/testing/
 
 # Copy files from previous build
 RUN mkdir /apktool

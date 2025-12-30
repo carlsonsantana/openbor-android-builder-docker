@@ -2,7 +2,7 @@
 
 This project allows you to build **OpenBOR** games for **Android** using **Docker**.
 
-> **⚠️ Important:** The build process generates an **unsigned** `*.apk` file. You must still [align and sign your app](https://developer.android.com/build/building-cmdline#sign_manually) before it can be installed on an Android device.
+> **⚠️ Important:** The build process generates an **aligned** `*.apk` file. You must still [sign your app](https://developer.android.com/build/building-cmdline#sign_manually) before it can be installed on an Android device.
 
 ## Install
 
@@ -24,7 +24,7 @@ You must mount the following volumes when running the Docker image. These mounts
 
 * `/bor.pak` your compiled OpenBOR game;
 * `/icon.png` the icon for your Android game;
-* `/output` the directory where the unsigned `.apk` will be created.
+* `/output` the directory where the aligned `.apk` will be created.
 
 ### Environment Variables
 
