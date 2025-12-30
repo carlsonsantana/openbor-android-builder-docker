@@ -62,8 +62,9 @@ RUN export ANDROID_SDK_ROOT=/android-sdk && \
 FROM eclipse-temurin:17.0.17_10-jdk-alpine-3.23
 
 # Install dependencies
-RUN apk --update --no-cache add imagemagick abseil-cpp-hash gtest libprotobuf && \
+RUN apk --update --no-cache add curl imagemagick abseil-cpp-hash gtest libprotobuf && \
   apk --update --no-cache add android-build-tools --repository=http://dl-cdn.alpinelinux.org/alpine/edge/testing/
+RUN curl -L "https://github.com/carlsonsantana/signmyapp/releases/download/1.1.0/signmyapp.jar" --output /opt/signmyapp.jar
 
 # Copy files from previous build
 RUN mkdir /apktool
@@ -75,12 +76,16 @@ RUN mkdir /output
 VOLUME /bor.pak
 VOLUME /icon.png
 VOLUME /output
+VOLUME /game_certificate.key
 
 # Environment variables
 ENV GAME_APK_NAME "com.mycompany.gamename"
 ENV GAME_NAME "Game Name"
 ENV GAME_VERSION_CODE "100"
 ENV GAME_VERSION_NAME "1.0.0"
+ENV GAME_KEYSTORE_PASSWORD ""
+ENV GAME_KEYSTORE_KEY_ALIAS ""
+ENV GAME_KEYSTORE_KEY_PASSWORD ""
 
 # Run build
 WORKDIR /
