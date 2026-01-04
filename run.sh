@@ -17,14 +17,33 @@ if [ -f "/game_certificate.key" ]; then
   fi
 fi
 
-resize_icon() {
-  magick /icon.png -resize $1 $2 && oxipng -o 6 --strip safe $2
+mipmap_resize_icon() {
+  OUTPUT_PATH_ICON_ROUND="/openbor-android/res/$2/ic_launcher_round.png"
+  OUTPUT_PATH_ICON_BACKGROUND="/openbor-android/res/$2/ic_launcher_background.png"
+  OUTPUT_PATH_ICON_FOREGROUND="/openbor-android/res/$2/ic_launcher_foreground.png"
+  OUTPUT_PATH_ICON_MONOCHROME="/openbor-android/res/$2/ic_launcher_monochrome.png"
+
+  TEMP_CIRCLE_MASK=$(mktemp /tmp/XXXXXXX.png)
+  TEMP_RESIZED_IMAGE=$(mktemp /tmp/XXXXXXX.png)
+
+  magick -size $1"x"$1 xc:none -fill white -draw "roundrectangle 0,0,$1,$1,$1,$1" $TEMP_CIRCLE_MASK
+  magick /icon.png -resize $1"x"$1 $TEMP_RESIZED_IMAGE
+  magick $TEMP_RESIZED_IMAGE -alpha Set $TEMP_CIRCLE_MASK -compose DstIn -composite $OUTPUT_PATH_ICON_ROUND && oxipng -o 6 --strip safe $OUTPUT_PATH_ICON_ROUND
+
+  magick /icon_background.png -resize $1"x"$1 $OUTPUT_PATH_ICON_BACKGROUND && oxipng -o 6 --strip safe $OUTPUT_PATH_ICON_BACKGROUND
+  magick /icon.png -resize $1"x"$1 $OUTPUT_PATH_ICON_FOREGROUND && oxipng -o 6 --strip safe $OUTPUT_PATH_ICON_FOREGROUND
+  magick /icon.png -resize $1"x"$1 $OUTPUT_PATH_ICON_MONOCHROME && oxipng -o 6 --strip safe $OUTPUT_PATH_ICON_MONOCHROME
+
+  rm $TEMP_CIRCLE_MASK $TEMP_RESIZED_IMAGE
 }
 
 # Convert icons
-resize_icon 36x36 /openbor-android/res/drawable-ldpi/icon.png
-resize_icon 48x48 /openbor-android/res/drawable-mdpi/icon.png
-resize_icon 72x72 /openbor-android/res/drawable-hdpi/icon.png
+mipmap_resize_icon "36" "mipmap-ldpi"
+mipmap_resize_icon "48" "mipmap-mdpi"
+mipmap_resize_icon "72" "mipmap-hdpi"
+mipmap_resize_icon "96" "mipmap-xhdpi"
+mipmap_resize_icon "144" "mipmap-xxhdpi"
+mipmap_resize_icon "192" "mipmap-xxxhdpi"
 
 # Rename APK name and application ID
 sed -i "s|ZZZZZ|$GAME_NAME|g" /openbor-android/res/values/strings.xml

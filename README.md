@@ -22,6 +22,7 @@ You must mount the following volumes when running the Docker image. These mounts
 
 * `/bor.pak` your compiled OpenBOR game;
 * `/icon.png` the icon for your Android game;
+* `/icon_background.png` the background icon for your Android game;
 * `/output` the directory where the aligned or signed `.apk` will be created;
 * **(Optional)** `/game_certificate.key` the keystore file used to [sign the `.apk`](https://developer.android.com/build/building-cmdline#sign_manually), if passed you must pass the following environment variables `GAME_KEYSTORE_PASSWORD`, `GAME_KEYSTORE_KEY_ALIAS` and `GAME_KEYSTORE_KEY_PASSWORD`.
 

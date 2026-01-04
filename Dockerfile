@@ -2,11 +2,12 @@ FROM debian:bullseye-20251117-slim as android-sdk-builder
 
 # Build arguments
 ARG SDK_VERSION="9477386_latest"
+ARG NDK_VERSION="21.4.7075529"
 ARG APKTOOL_VERSION="2.12.1"
 
 # Install dependencies
 RUN apt update && apt upgrade -y && \
-  apt install -y curl unzip openjdk-11-jdk openjdk-17-jdk make && \
+  apt install -y curl unzip openjdk-11-jdk openjdk-17-jdk make file && \
   apt-get clean -y && \
   apt-get autoremove -y && \
   apt-get autoclean -y && \
@@ -34,7 +35,7 @@ RUN export ANDROID_SDK_ROOT=/android-sdk && \
   mv cmdline-tools /android-sdk/cmdline-tools/latest && \
   cd /android-sdk/cmdline-tools/latest/bin && \
   update-alternatives --set java $(update-alternatives --list java | grep java-17) && \
-  echo "y" | ./sdkmanager --install "build-tools;29.0.3" "platform-tools" "platforms;android-29" "tools" "ndk-bundle" && \
+  echo "y" | ./sdkmanager --install "build-tools;36.0.0" "platform-tools" "platforms;android-36" "tools" "ndk;${NDK_VERSION}" && \
   cd /openbor/engine/android && \
   update-alternatives --set java $(update-alternatives --list java | grep java-11) && \
   keytool -genkey -noprompt -v \
@@ -49,10 +50,8 @@ RUN export ANDROID_SDK_ROOT=/android-sdk && \
   ./gradlew assembleRelease --no-daemon --no-build-cache && \
   update-alternatives --set java $(update-alternatives --list java | grep java-17) && \
   java -jar /apktool/apktool.jar d /openbor/engine/android/app/build/outputs/apk/release/OpenBOR.apk -o /openbor-android && \
+  mkdir /openbor-android/res/mipmap-ldpi && \
   rm keystore.properties game_certificate.jks /openbor/engine/android/app/build/outputs/apk/release/OpenBOR.apk && \
-  rm /openbor/engine/android/app/src/main/res/drawable-hdpi/icon.png && \
-  rm /openbor/engine/android/app/src/main/res/drawable-ldpi/icon.png && \
-  rm /openbor/engine/android/app/src/main/res/drawable-mdpi/icon.png && \
   rm /openbor/engine/android/app/src/main/assets/bor.pak && \
   rm -R /android-sdk ~/.gradle ~/.android && \
   unset ANDROID_SDK_ROOT
@@ -75,6 +74,7 @@ COPY --from=android-sdk-builder /openbor-android /openbor-android
 RUN mkdir /output
 VOLUME /bor.pak
 VOLUME /icon.png
+VOLUME /icon_background.png
 VOLUME /output
 VOLUME /game_certificate.key
 
