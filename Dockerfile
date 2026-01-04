@@ -7,7 +7,7 @@ ARG APKTOOL_VERSION="2.12.1"
 
 # Install dependencies
 RUN apt update && apt upgrade -y && \
-  apt install -y curl unzip openjdk-11-jdk openjdk-17-jdk make file && \
+  apt install -y curl unzip openjdk-17-jdk make file && \
   apt-get clean -y && \
   apt-get autoremove -y && \
   apt-get autoclean -y && \
@@ -34,10 +34,8 @@ RUN export ANDROID_SDK_ROOT=/android-sdk && \
   mkdir -p /android-sdk/cmdline-tools && \
   mv cmdline-tools /android-sdk/cmdline-tools/latest && \
   cd /android-sdk/cmdline-tools/latest/bin && \
-  update-alternatives --set java $(update-alternatives --list java | grep java-17) && \
   echo "y" | ./sdkmanager --install "build-tools;36.0.0" "platform-tools" "platforms;android-36" "tools" "ndk;${NDK_VERSION}" && \
   cd /openbor/engine/android && \
-  update-alternatives --set java $(update-alternatives --list java | grep java-11) && \
   keytool -genkey -noprompt -v \
     -keystore game_certificate.jks \
     -storepass 123456 \
@@ -48,7 +46,6 @@ RUN export ANDROID_SDK_ROOT=/android-sdk && \
   printf "storePassword=123456\nkeyPassword=123456\nkeyAlias=a\nstoreFile=/openbor/engine/android/game_certificate.jks\n" > keystore.properties && \
   touch /openbor/engine/android/app/src/main/assets/bor.pak && \
   ./gradlew assembleRelease --no-daemon --no-build-cache && \
-  update-alternatives --set java $(update-alternatives --list java | grep java-17) && \
   java -jar /apktool/apktool.jar d /openbor/engine/android/app/build/outputs/apk/release/OpenBOR.apk -o /openbor-android && \
   mkdir /openbor-android/res/mipmap-ldpi && \
   rm keystore.properties game_certificate.jks /openbor/engine/android/app/build/outputs/apk/release/OpenBOR.apk && \
