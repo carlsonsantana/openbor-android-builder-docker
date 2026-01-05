@@ -88,5 +88,5 @@ ENV GAME_KEYSTORE_KEY_PASSWORD ""
 
 # Run build
 WORKDIR /
-COPY run.sh /
-CMD ["sh", "/run.sh"]
+COPY script /script
+CMD ["sh", "/script/run.sh"]
