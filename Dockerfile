@@ -3,11 +3,12 @@ FROM debian:bullseye-20251117-slim as android-sdk-builder
 # Build arguments
 ARG SDK_VERSION="9477386_latest"
 ARG NDK_VERSION="21.4.7075529"
+ARG CMAKE_VERSION="3.22.1"
 ARG APKTOOL_VERSION="2.12.1"
 
 # Install dependencies
 RUN apt update && apt upgrade -y && \
-  apt install -y curl unzip openjdk-17-jdk make file && \
+  apt install -y curl unzip openjdk-17-jdk make file xz-utils && \
   apt-get clean -y && \
   apt-get autoremove -y && \
   apt-get autoclean -y && \
@@ -18,6 +19,7 @@ RUN mkdir /apktool && \
 
 # Copy OpenBOR repository
 COPY openbor /openbor
+COPY build_libs.sh /opt/build_libs.sh
 
 # Create version header file
 WORKDIR /openbor/engine
@@ -34,7 +36,7 @@ RUN export ANDROID_SDK_ROOT=/android-sdk && \
   mkdir -p /android-sdk/cmdline-tools && \
   mv cmdline-tools /android-sdk/cmdline-tools/latest && \
   cd /android-sdk/cmdline-tools/latest/bin && \
-  echo "y" | ./sdkmanager --install "build-tools;36.0.0" "platform-tools" "platforms;android-36" "tools" "ndk;${NDK_VERSION}" && \
+  echo "y" | ./sdkmanager --install "build-tools;36.0.0" "platform-tools" "platforms;android-36" "tools" "ndk;${NDK_VERSION}" "cmake;${CMAKE_VERSION}" && \
   cd /openbor/engine/android && \
   keytool -genkey -noprompt -v \
     -keystore game_certificate.jks \
@@ -45,6 +47,7 @@ RUN export ANDROID_SDK_ROOT=/android-sdk && \
     -dname "CN=gamename.mycompany.com, OU=O, O=O, L=O, S=O, C=US" && \
   printf "storePassword=123456\nkeyPassword=123456\nkeyAlias=a\nstoreFile=/openbor/engine/android/game_certificate.jks\n" > keystore.properties && \
   touch /openbor/engine/android/app/src/main/assets/bor.pak && \
+  bash /opt/build_libs.sh && \
   ./gradlew assembleRelease --no-daemon --no-build-cache && \
   java -jar /apktool/apktool.jar d /openbor/engine/android/app/build/outputs/apk/release/OpenBOR.apk -o /openbor-android && \
   mkdir /openbor-android/res/mipmap-ldpi && \
