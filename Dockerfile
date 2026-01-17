@@ -8,7 +8,7 @@ ARG APKTOOL_VERSION="2.12.1"
 
 # Install dependencies
 RUN apt update && apt upgrade -y && \
-  apt install -y curl unzip openjdk-17-jdk make file xz-utils && \
+  apt install -y curl unzip openjdk-17-jdk make file xz-utils python3 python3-distutils && \
   apt-get clean -y && \
   apt-get autoremove -y && \
   apt-get autoclean -y && \
