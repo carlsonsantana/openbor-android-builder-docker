@@ -4,49 +4,73 @@ set -e
 
 export ANDROID_SDK_ROOT=/android-sdk
 export ANDROID_NDK=/android-sdk/ndk/21.4.7075529
-TOOLCHAIN_ARCHITECTURE="armeabi-v7a"
-TOOLCHAIN_PATH="/mylibs/$TOOLCHAIN_ARCHITECTURE-toolchain"
-ADDITIONAL_ARCHITECTURE_FLAGS="-march=armv7-a -mfloat-abi=softfp -mfpu=vfpv3"
 
 mkdir /mylibs
 
-cd /mylibs/
-curl -L https://sitsa.dl.sourceforge.net/project/libpng/libpng16/older-releases/1.6.36/libpng-1.6.36.tar.xz?viasf=1 --output libpng-1.6.36.tar.xz
-tar -xf libpng-1.6.36.tar.xz
-cd libpng-1.6.36
+install_libpng_architecture() {
+  TOOLCHAIN_ARCHITECTURE="$1"
+  ADDITIONAL_ARCHITECTURE_FLAGS="$2"
+  ANDROID_API=$3
+  TOOLCHAIN_PATH="/mylibs/$TOOLCHAIN_ARCHITECTURE-toolchain"
 
-/android-sdk/cmake/3.22.1/bin/cmake . -Bbuild -DCMAKE_BUILD_TYPE=RelWithDebInfo -DBUILD_SHARED_LIBS=OFF -DCMAKE_C_FLAGS="-no-integrated-as -g0 -O2 -fPIC $ADDITIONAL_ARCHITECTURE_FLAGS -I$TOOLCHAIN_PATH/include -I$ANDROID_NDK/sources/android/cpufeatures" -DCMAKE_CXX_FLAGS="-no-integrated-as -g0 -O2 -fPIC $ADDITIONAL_ARCHITECTURE_FLAGS -I$TOOLCHAIN_PATH/include -I$ANDROID_NDK/sources/android/cpufeatures" -DCMAKE_INSTALL_LIBDIR=lib -DCMAKE_AR=$ANDROID_NDK/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-ar -DCMAKE_NM=$ANDROID_NDK/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-nm -DCMAKE_RANLIB=$ANDROID_NDK/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-ranlib  -DCMAKE_INSTALL_PREFIX=$TOOLCHAIN_PATH -DCMAKE_SYSTEM_NAME=Android -DCMAKE_POLICY_VERSION_MINIMUM=3.5 -DCMAKE_PREFIX_PATH=$TOOLCHAIN_PATH -DCMAKE_ANDROID_ARCH_ABI=$TOOLCHAIN_ARCHITECTURE -DCMAKE_ANDROID_API=16 -DCMAKE_FIND_ROOT_PATH=$TOOLCHAIN_PATH -DPNG_SHARED=OFF -DPNG_EXECUTABLES=OFF -DPNG_TESTS=OFF
+  cd /mylibs/
+  tar -xf libpng-1.6.36.tar.xz
+  cd libpng-1.6.36
 
-/android-sdk/cmake/3.22.1/bin/cmake --build build --target clean
-/android-sdk/cmake/3.22.1/bin/cmake --build build
-/android-sdk/cmake/3.22.1/bin/cmake --build build --target install
+  /android-sdk/cmake/3.22.1/bin/cmake . -Bbuild -DCMAKE_BUILD_TYPE=RelWithDebInfo -DBUILD_SHARED_LIBS=OFF -DCMAKE_C_FLAGS="-no-integrated-as -g0 -O2 -fPIC $ADDITIONAL_ARCHITECTURE_FLAGS -I$TOOLCHAIN_PATH/include -I$ANDROID_NDK/sources/android/cpufeatures" -DCMAKE_INSTALL_LIBDIR=lib -DCMAKE_AR=$ANDROID_NDK/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-ar -DCMAKE_NM=$ANDROID_NDK/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-nm -DCMAKE_RANLIB=$ANDROID_NDK/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-ranlib  -DCMAKE_INSTALL_PREFIX=$TOOLCHAIN_PATH -DCMAKE_SYSTEM_NAME=Android -DCMAKE_PREFIX_PATH=$TOOLCHAIN_PATH -DCMAKE_ANDROID_ARCH_ABI=$TOOLCHAIN_ARCHITECTURE -DCMAKE_ANDROID_API=$ANDROID_API -DCMAKE_FIND_ROOT_PATH=$TOOLCHAIN_PATH -DPNG_SHARED=OFF -DPNG_TESTS=OFF
 
-rm /openbor/engine/android/app/jni/openbor/lib/$TOOLCHAIN_ARCHITECTURE/libpng.a
-cp $TOOLCHAIN_PATH/lib/libpng16.a /openbor/engine/android/app/jni/openbor/lib/$TOOLCHAIN_ARCHITECTURE/libpng.a
+  /android-sdk/cmake/3.22.1/bin/cmake --build build --target clean
+  /android-sdk/cmake/3.22.1/bin/cmake --build build
+  /android-sdk/cmake/3.22.1/bin/cmake --build build --target install
 
+  if [ -f "/openbor/engine/android/app/jni/openbor/lib/$TOOLCHAIN_ARCHITECTURE/libpng.a" ]; then
+    rm /openbor/engine/android/app/jni/openbor/lib/$TOOLCHAIN_ARCHITECTURE/libpng.a
+  else
+    mkdir -p /openbor/engine/android/app/jni/openbor/lib/$TOOLCHAIN_ARCHITECTURE
+  fi
+  cp $TOOLCHAIN_PATH/lib/libpng16.a /openbor/engine/android/app/jni/openbor/lib/$TOOLCHAIN_ARCHITECTURE/libpng.a
 
-cd /mylibs/
-curl -L https://github.com/webmproject/libvpx/archive/refs/tags/v1.8.0.tar.gz --output v1.8.0.tar.gz
-tar -xzf v1.8.0.tar.gz
-cd libvpx-1.8.0/
+  cd /mylibs/
+  rm -r /mylibs/libpng-1.6.36
+}
 
-NDK_ARCH="arm"
-STANDALONE_TOOLCHAIN_PATH="/mylibs/gcc-$TOOLCHAIN_ARCHITECTURE-toolchain"
-TARGET="armv7-android-gcc"
+install_libpng() {
+  cd /mylibs/
+  curl -L https://sitsa.dl.sourceforge.net/project/libpng/libpng16/older-releases/1.6.36/libpng-1.6.36.tar.xz?viasf=1 --output /mylibs/libpng-1.6.36.tar.xz
 
-python3 ${ANDROID_NDK}/build/tools/make_standalone_toolchain.py --arch $NDK_ARCH --api 21 --stl libc++ --install-dir=${STANDALONE_TOOLCHAIN_PATH}
+  install_libpng_architecture "armeabi-v7a" "-march=armv7-a -mfloat-abi=softfp -mfpu=vfpv3" 16
+  install_libpng_architecture "arm64-v8a" "-march=armv8-a" 21
+  install_libpng_architecture "x86" "-march=i686 -m32" 16
+  install_libpng_architecture "x86_64" "-march=x86-64 -m64" 21
+}
 
-export CFLAGS="-D__ANDROID__ -g0 -O2 -fPIC $ADDITIONAL_ARCHITECTURE_FLAGS -I$ANDROID_NDK/sources/android/cpufeatures"
-export LDFLAGS="-march=armv7-a"
-export AR=$ANDROID_NDK/toolchains/llvm/prebuilt/linux-x86_64/bin/arm-linux-androideabi-ar
-export CC=$ANDROID_NDK/toolchains/llvm/prebuilt/linux-x86_64/bin/armv7a-linux-androideabi21-clang
-export CXX=$ANDROID_NDK/toolchains/llvm/prebuilt/linux-x86_64/bin/armv7a-linux-androideabi21-clang++
-export LD=$ANDROID_NDK/toolchains/llvm/prebuilt/linux-x86_64/bin/arm-linux-androideabi-ld
-export STRIP=$ANDROID_NDK/toolchains/llvm/prebuilt/linux-x86_64/bin/arm-linux-androideabi-strip
-export RANLIB=$ANDROID_NDK/toolchains/llvm/prebuilt/linux-x86_64/bin/arm-linux-androideabi-ranlib
-export NM=$ANDROID_NDK/toolchains/llvm/prebuilt/linux-x86_64/bin/arm-linux-androideabi-nm
+install_libvpx_architecture() {
+  TOOLCHAIN_ARCHITECTURE="$1"
+  ADDITIONAL_ARCHITECTURE_FLAGS="$2"
+  ANDROID_API=$3
+  NDK_ARCH="$4"
+  TARGET_ARCHITECTURE="$5"
+  LDFLAGS="$6"
+  ARCHTOOLS1="$7"
+  ARCHTOOLS2="$8"
+  ARCHTOOLS3="$9"
+  TOOLCHAIN_PATH="/mylibs/$TOOLCHAIN_ARCHITECTURE-toolchain"
+  STANDALONE_TOOLCHAIN_PATH="/mylibs/gcc-$TOOLCHAIN_ARCHITECTURE-toolchain"
+  export CFLAGS="-D__ANDROID__ -g0 -O2 -fPIC $ADDITIONAL_ARCHITECTURE_FLAGS -I$ANDROID_NDK/sources/android/cpufeatures"
+  export LDFLAGS="$LDFLAGS"
+  export AR=$ANDROID_NDK/toolchains/llvm/prebuilt/linux-x86_64/bin/$ARCHTOOLS1-linux-android$ARCHTOOLS3-ar
+  export CC=$ANDROID_NDK/toolchains/llvm/prebuilt/linux-x86_64/bin/$ARCHTOOLS2-linux-android$ARCHTOOLS3$ANDROID_API-clang
+  export CXX=$ANDROID_NDK/toolchains/llvm/prebuilt/linux-x86_64/bin/$ARCHTOOLS2-linux-android$ARCHTOOLS3$ANDROID_API-clang++
+  export LD=$ANDROID_NDK/toolchains/llvm/prebuilt/linux-x86_64/bin/$ARCHTOOLS1-linux-android$ARCHTOOLS3-ld
+  export STRIP=$ANDROID_NDK/toolchains/llvm/prebuilt/linux-x86_64/bin/$ARCHTOOLS1-linux-android$ARCHTOOLS3-strip
+  export RANLIB=$ANDROID_NDK/toolchains/llvm/prebuilt/linux-x86_64/bin/$ARCHTOOLS1-linux-android$ARCHTOOLS3-ranlib
+  export NM=$ANDROID_NDK/toolchains/llvm/prebuilt/linux-x86_64/bin/$ARCHTOOLS1-linux-android$ARCHTOOLS3-nm
 
-./configure \
+  cd /mylibs/
+  tar -xzf v1.8.0.tar.gz
+  cd libvpx-1.8.0/
+
+  ./configure \
     --prefix=$TOOLCHAIN_PATH \
     --target=${TARGET} \
     --as=yasm \
@@ -63,10 +87,32 @@ export NM=$ANDROID_NDK/toolchains/llvm/prebuilt/linux-x86_64/bin/arm-linux-andro
     --enable-runtime-cpu-detect \
     --disable-webm-io \
     --disable-neon-asm
-make -j$(nproc) install
+  make -j$(nproc) install
 
-rm /openbor/engine/android/app/jni/openbor/lib/$TOOLCHAIN_ARCHITECTURE/libvpx.a
-cp $TOOLCHAIN_PATH/lib/libvpx.a /openbor/engine/android/app/jni/openbor/lib/$TOOLCHAIN_ARCHITECTURE/libvpx.a
+  if [ -f "/openbor/engine/android/app/jni/openbor/lib/$TOOLCHAIN_ARCHITECTURE/libvpx.a" ]; then
+    rm /openbor/engine/android/app/jni/openbor/lib/$TOOLCHAIN_ARCHITECTURE/libvpx.a
+  else
+    mkdir -p /openbor/engine/android/app/jni/openbor/lib/$TOOLCHAIN_ARCHITECTURE
+  fi
+  cp $TOOLCHAIN_PATH/lib/libvpx.a /openbor/engine/android/app/jni/openbor/lib/$TOOLCHAIN_ARCHITECTURE/libvpx.a
+
+  cd /mylibs/
+  rm -r /mylibs/libvpx-1.8.0
+}
+
+install_libvpx() {
+  cd /mylibs/
+  curl -L https://github.com/webmproject/libvpx/archive/refs/tags/v1.8.0.tar.gz --output v1.8.0.tar.gz
+
+  install_libvpx_architecture "armeabi-v7a" "-march=armv7-a -mfloat-abi=softfp -mfpu=vfpv3" 16 "arm" "armv7-android-gcc" "-march=armv7-a" "arm" "armv7a" "eabi"
+  install_libvpx_architecture "arm64-v8a" "-march=armv8-a" 21 "arm64" "arm64-android-gcc" "" "aarch64" "aarch64" ""
+  install_libvpx_architecture "x86" "-march=i686 -m32" 16 "x86" "x86-android-gcc" "" "i686" "i686" ""
+  install_libvpx_architecture "x86_64" "-march=x86-64 -m64" 21 "x86_64" "x86_64-android-gcc" "" "x86_64" "x86_64" ""
+}
+
+install_libpng
+install_libvpx
+
 
 cd /openbor/engine/android
 rm -R /mylibs
