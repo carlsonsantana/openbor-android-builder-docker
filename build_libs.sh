@@ -170,9 +170,69 @@ install_libogg() {
 }
 
 
+install_libvorbis_architecture() {
+  TOOLCHAIN_ARCHITECTURE="$1"
+  ADDITIONAL_ARCHITECTURE_FLAGS="$2"
+  ANDROID_API=$3
+  TARGET_ARCHITECTURE="$4"
+  HOST_ARCHITECTURE="$5"
+  LDFLAGS="$6"
+  ARCHTOOLS1="$7"
+  ARCHTOOLS2="$8"
+  ARCHTOOLS3="$9"
+  TOOLCHAIN_PATH="/mylibs/$TOOLCHAIN_ARCHITECTURE-toolchain"
+  export CFLAGS="-g0 -O2 -fPIC $ADDITIONAL_ARCHITECTURE_FLAGS -I$ANDROID_NDK/sources/android/cpufeatures"
+  export CPPFLAGS="$CFLAGS"
+  export OGG_CFLAGS="$CFLAGS"
+  export LDFLAGS="$LDFLAGS"
+  export AR=$ANDROID_NDK/toolchains/llvm/prebuilt/linux-x86_64/bin/$ARCHTOOLS1-linux-android$ARCHTOOLS3-ar
+  export CC=$ANDROID_NDK/toolchains/llvm/prebuilt/linux-x86_64/bin/$ARCHTOOLS2-linux-android$ARCHTOOLS3$ANDROID_API-clang
+  export CXX=$ANDROID_NDK/toolchains/llvm/prebuilt/linux-x86_64/bin/$ARCHTOOLS2-linux-android$ARCHTOOLS3$ANDROID_API-clang++
+  export LD=$ANDROID_NDK/toolchains/llvm/prebuilt/linux-x86_64/bin/$ARCHTOOLS1-linux-android$ARCHTOOLS3-ld
+  export STRIP=$ANDROID_NDK/toolchains/llvm/prebuilt/linux-x86_64/bin/$ARCHTOOLS1-linux-android$ARCHTOOLS3-strip
+  export RANLIB=$ANDROID_NDK/toolchains/llvm/prebuilt/linux-x86_64/bin/$ARCHTOOLS1-linux-android$ARCHTOOLS3-ranlib
+  export NM=$ANDROID_NDK/toolchains/llvm/prebuilt/linux-x86_64/bin/$ARCHTOOLS1-linux-android$ARCHTOOLS3-nm
+
+  cd /mylibs/
+  tar -xf libvorbis-1.3.6.tar.xz
+  cd libvorbis-1.3.6/
+
+  ./configure \
+    --prefix=$TOOLCHAIN_PATH \
+    --target=${TARGET} \
+    --host=${HOST_ARCHITECTURE} \
+    --enable-static \
+    --disable-shared \
+    --disable-dependency-tracking \
+    --with-ogg=$TOOLCHAIN_PATH
+  make -j$(nproc) install
+
+  if [ -f "/openbor/engine/android/app/jni/openbor/lib/$TOOLCHAIN_ARCHITECTURE/libogg.a" ]; then
+    rm /openbor/engine/android/app/jni/openbor/lib/$TOOLCHAIN_ARCHITECTURE/libogg.a
+  else
+    mkdir -p /openbor/engine/android/app/jni/openbor/lib/$TOOLCHAIN_ARCHITECTURE
+  fi
+  cp $TOOLCHAIN_PATH/lib/libogg.a /openbor/engine/android/app/jni/openbor/lib/$TOOLCHAIN_ARCHITECTURE/libogg.a
+
+  cd /mylibs/
+  rm -r /mylibs/libogg-1.3.3
+}
+
+install_libvorbis() {
+  cd /mylibs/
+  curl -L https://downloads.xiph.org/releases/vorbis/libvorbis-1.3.6.tar.xz --output libvorbis-1.3.6.tar.xz
+
+  install_libogg_architecture "armeabi-v7a" "-march=armv7-a -mfloat-abi=softfp -mfpu=vfpv3" 16 "armv7-android-gcc" "armv7a-linux-androideabi" "-march=armv7-a" "arm" "armv7a" "eabi"
+  install_libogg_architecture "arm64-v8a" "-march=armv8-a" 21 "arm64-android-gcc" "aarch64-linux-android" "" "aarch64" "aarch64" ""
+  install_libogg_architecture "x86" "-march=i686 -m32" 16 "x86-android-gcc" "i686-linux-android" "" "i686" "i686" ""
+  install_libogg_architecture "x86_64" "-march=x86-64 -m64" 21 "x86_64-android-gcc" "x86_64-linux-android" "" "x86_64" "x86_64" ""
+}
+
+
 install_libpng
 install_libvpx
 install_libogg
+install_libvorbis
 
 
 cd /openbor/engine/android
