@@ -49,14 +49,14 @@ install_libvpx_architecture() {
   TOOLCHAIN_ARCHITECTURE="$1"
   ADDITIONAL_ARCHITECTURE_FLAGS="$2"
   ANDROID_API=$3
-  NDK_ARCH="$4"
-  TARGET_ARCHITECTURE="$5"
-  LDFLAGS="$6"
-  ARCHTOOLS1="$7"
-  ARCHTOOLS2="$8"
-  ARCHTOOLS3="$9"
+  TARGET_ARCHITECTURE="$4"
+  LDFLAGS="$5"
+  ARCHTOOLS1="$6"
+  ARCHTOOLS2="$7"
+  ARCHTOOLS3="$8"
   TOOLCHAIN_PATH="/mylibs/$TOOLCHAIN_ARCHITECTURE-toolchain"
-  export CFLAGS="-D__ANDROID__ -g0 -O2 -fPIC $ADDITIONAL_ARCHITECTURE_FLAGS -I$ANDROID_NDK/sources/android/cpufeatures"
+  export CFLAGS="-g0 -O2 -fPIC $ADDITIONAL_ARCHITECTURE_FLAGS -I$ANDROID_NDK/sources/android/cpufeatures -D__ANDROID__"
+  export CPPFLAGS="$CFLAGS"
   export LDFLAGS="$LDFLAGS"
   export AR=$ANDROID_NDK/toolchains/llvm/prebuilt/linux-x86_64/bin/$ARCHTOOLS1-linux-android$ARCHTOOLS3-ar
   export CC=$ANDROID_NDK/toolchains/llvm/prebuilt/linux-x86_64/bin/$ARCHTOOLS2-linux-android$ARCHTOOLS3$ANDROID_API-clang
@@ -72,7 +72,7 @@ install_libvpx_architecture() {
 
   ./configure \
     --prefix=$TOOLCHAIN_PATH \
-    --target=${TARGET} \
+    --target=${TARGET_ARCHITECTURE} \
     --as=yasm \
     --enable-pic \
     --disable-docs \
@@ -106,10 +106,10 @@ install_libvpx() {
   cd /mylibs/
   curl -L https://github.com/webmproject/libvpx/archive/refs/tags/v1.8.0.tar.gz --output v1.8.0.tar.gz
 
-  install_libvpx_architecture "armeabi-v7a" "-march=armv7-a -mfloat-abi=softfp -mfpu=vfpv3" 16 "arm" "armv7-android-gcc" "-march=armv7-a" "arm" "armv7a" "eabi"
-  install_libvpx_architecture "arm64-v8a" "-march=armv8-a" 21 "arm64" "arm64-android-gcc" "" "aarch64" "aarch64" ""
-  install_libvpx_architecture "x86" "-march=i686 -m32" 16 "x86" "x86-android-gcc" "" "i686" "i686" ""
-  install_libvpx_architecture "x86_64" "-march=x86-64 -m64" 21 "x86_64" "x86_64-android-gcc" "" "x86_64" "x86_64" ""
+  install_libvpx_architecture "armeabi-v7a" "-march=armv7-a -mfloat-abi=softfp -mfpu=vfpv3" 16 "armv7-android-gcc" "-march=armv7-a" "arm" "armv7a" "eabi"
+  install_libvpx_architecture "arm64-v8a" "-march=armv8-a" 21 "arm64-android-gcc" "" "aarch64" "aarch64" ""
+  install_libvpx_architecture "x86" "-march=i686 -m32" 16 "x86-android-gcc" "" "i686" "i686" ""
+  install_libvpx_architecture "x86_64" "-march=x86-64 -m64" 21 "x86_64-android-gcc" "" "x86_64" "x86_64" ""
 }
 
 
@@ -141,7 +141,7 @@ install_libogg_architecture() {
 
   ./configure \
     --prefix=$TOOLCHAIN_PATH \
-    --target=${TARGET} \
+    --target=${TARGET_ARCHITECTURE} \
     --host=${HOST_ARCHITECTURE} \
     --enable-static \
     --disable-shared \
@@ -163,10 +163,10 @@ install_libogg() {
   cd /mylibs/
   curl -L https://downloads.xiph.org/releases/ogg/libogg-1.3.3.tar.xz --output libogg-1.3.3.tar.xz
 
-  install_libogg_architecture "armeabi-v7a" "-march=armv7-a -mfloat-abi=softfp -mfpu=vfpv3" 16 "armv7-android-gcc" "armv7a-linux-androideabi" "-march=armv7-a" "arm" "armv7a" "eabi"
-  install_libogg_architecture "arm64-v8a" "-march=armv8-a" 21 "arm64-android-gcc" "aarch64-linux-android" "" "aarch64" "aarch64" ""
-  install_libogg_architecture "x86" "-march=i686 -m32" 16 "x86-android-gcc" "i686-linux-android" "" "i686" "i686" ""
-  install_libogg_architecture "x86_64" "-march=x86-64 -m64" 21 "x86_64-android-gcc" "x86_64-linux-android" "" "x86_64" "x86_64" ""
+  install_libogg_architecture "armeabi-v7a" "-march=armv7-a -mfloat-abi=softfp -mfpu=vfpv3 -DBYTE_ORDER=LITTLE_ENDIAN" 16 "armv7-android-gcc" "armv7a-linux-androideabi" "-march=armv7-a" "arm" "armv7a" "eabi"
+  install_libogg_architecture "arm64-v8a" "-march=armv8-a -DBYTE_ORDER=LITTLE_ENDIAN" 21 "arm64-android-gcc" "aarch64-linux-android" "" "aarch64" "aarch64" ""
+  install_libogg_architecture "x86" "-march=i686 -m32 -DBYTE_ORDER=LITTLE_ENDIAN" 16 "x86-android-gcc" "i686-linux-android" "" "i686" "i686" ""
+  install_libogg_architecture "x86_64" "-march=x86-64 -m64 -DBYTE_ORDER=LITTLE_ENDIAN" 21 "x86_64-android-gcc" "x86_64-linux-android" "" "x86_64" "x86_64" ""
 }
 
 
@@ -174,16 +174,14 @@ install_libvorbis_architecture() {
   TOOLCHAIN_ARCHITECTURE="$1"
   ADDITIONAL_ARCHITECTURE_FLAGS="$2"
   ANDROID_API=$3
-  TARGET_ARCHITECTURE="$4"
-  HOST_ARCHITECTURE="$5"
-  LDFLAGS="$6"
-  ARCHTOOLS1="$7"
-  ARCHTOOLS2="$8"
-  ARCHTOOLS3="$9"
+  HOST_ARCHITECTURE="$4"
+  LDFLAGS="$5"
+  ARCHTOOLS1="$6"
+  ARCHTOOLS2="$7"
+  ARCHTOOLS3="$8"
   TOOLCHAIN_PATH="/mylibs/$TOOLCHAIN_ARCHITECTURE-toolchain"
   export CFLAGS="-g0 -O2 -fPIC $ADDITIONAL_ARCHITECTURE_FLAGS -I$ANDROID_NDK/sources/android/cpufeatures"
   export CPPFLAGS="$CFLAGS"
-  export OGG_CFLAGS="$CFLAGS"
   export LDFLAGS="$LDFLAGS"
   export AR=$ANDROID_NDK/toolchains/llvm/prebuilt/linux-x86_64/bin/$ARCHTOOLS1-linux-android$ARCHTOOLS3-ar
   export CC=$ANDROID_NDK/toolchains/llvm/prebuilt/linux-x86_64/bin/$ARCHTOOLS2-linux-android$ARCHTOOLS3$ANDROID_API-clang
@@ -192,40 +190,55 @@ install_libvorbis_architecture() {
   export STRIP=$ANDROID_NDK/toolchains/llvm/prebuilt/linux-x86_64/bin/$ARCHTOOLS1-linux-android$ARCHTOOLS3-strip
   export RANLIB=$ANDROID_NDK/toolchains/llvm/prebuilt/linux-x86_64/bin/$ARCHTOOLS1-linux-android$ARCHTOOLS3-ranlib
   export NM=$ANDROID_NDK/toolchains/llvm/prebuilt/linux-x86_64/bin/$ARCHTOOLS1-linux-android$ARCHTOOLS3-nm
+  export OBJDUMP=$ANDROID_NDK/toolchains/llvm/prebuilt/linux-x86_64/bin/$ARCHTOOLS1-linux-android$ARCHTOOLS3-objdump
+  export OGG_CFLAGS="-I$TOOLCHAIN_PATH/include"
+  export OGG_LIBS="-L$TOOLCHAIN_PATH/lib -logg"
 
   cd /mylibs/
-  tar -xf libvorbis-1.3.6.tar.xz
-  cd libvorbis-1.3.6/
+  tar -xzf tremor-7c30a66346199f3f09017a09567c6c8a3a0eedc8.tar.gz
+  cd tremor-7c30a66346199f3f09017a09567c6c8a3a0eedc8/
 
-  ./configure \
+  # Fix build errors
+  patch < /opt/patches/tremor.patch
+
+  ./autogen.sh \
     --prefix=$TOOLCHAIN_PATH \
-    --target=${TARGET} \
     --host=${HOST_ARCHITECTURE} \
     --enable-static \
     --disable-shared \
     --disable-dependency-tracking \
+    --enable-pic \
+    --with-ogg=$TOOLCHAIN_PATH || \
+    sed -i 's/XIPH_PATH_OGG(, as_fn_error $? "must have Ogg installed!" "$LINENO" 5)//g' ./configure && \
+    ./configure \
+    --prefix=$TOOLCHAIN_PATH \
+    --host=${HOST_ARCHITECTURE} \
+    --enable-static \
+    --disable-shared \
+    --disable-dependency-tracking \
+    --enable-pic \
     --with-ogg=$TOOLCHAIN_PATH
   make -j$(nproc) install
 
-  if [ -f "/openbor/engine/android/app/jni/openbor/lib/$TOOLCHAIN_ARCHITECTURE/libogg.a" ]; then
-    rm /openbor/engine/android/app/jni/openbor/lib/$TOOLCHAIN_ARCHITECTURE/libogg.a
+  if [ -f "/openbor/engine/android/app/jni/openbor/lib/$TOOLCHAIN_ARCHITECTURE/libvorbisidec.a" ]; then
+    rm /openbor/engine/android/app/jni/openbor/lib/$TOOLCHAIN_ARCHITECTURE/libvorbisidec.a
   else
     mkdir -p /openbor/engine/android/app/jni/openbor/lib/$TOOLCHAIN_ARCHITECTURE
   fi
-  cp $TOOLCHAIN_PATH/lib/libogg.a /openbor/engine/android/app/jni/openbor/lib/$TOOLCHAIN_ARCHITECTURE/libogg.a
+  cp $TOOLCHAIN_PATH/lib/libvorbisidec.a /openbor/engine/android/app/jni/openbor/lib/$TOOLCHAIN_ARCHITECTURE/libvorbisidec.a
 
   cd /mylibs/
-  rm -r /mylibs/libogg-1.3.3
+  rm -r /mylibs/tremor-7c30a66346199f3f09017a09567c6c8a3a0eedc8/
 }
 
 install_libvorbis() {
   cd /mylibs/
-  curl -L https://downloads.xiph.org/releases/vorbis/libvorbis-1.3.6.tar.xz --output libvorbis-1.3.6.tar.xz
+  curl -L https://gitlab.xiph.org/xiph/tremor/-/archive/7c30a66346199f3f09017a09567c6c8a3a0eedc8/tremor-7c30a66346199f3f09017a09567c6c8a3a0eedc8.tar.gz --output tremor-7c30a66346199f3f09017a09567c6c8a3a0eedc8.tar.gz
 
-  install_libogg_architecture "armeabi-v7a" "-march=armv7-a -mfloat-abi=softfp -mfpu=vfpv3" 16 "armv7-android-gcc" "armv7a-linux-androideabi" "-march=armv7-a" "arm" "armv7a" "eabi"
-  install_libogg_architecture "arm64-v8a" "-march=armv8-a" 21 "arm64-android-gcc" "aarch64-linux-android" "" "aarch64" "aarch64" ""
-  install_libogg_architecture "x86" "-march=i686 -m32" 16 "x86-android-gcc" "i686-linux-android" "" "i686" "i686" ""
-  install_libogg_architecture "x86_64" "-march=x86-64 -m64" 21 "x86_64-android-gcc" "x86_64-linux-android" "" "x86_64" "x86_64" ""
+  install_libvorbis_architecture "armeabi-v7a" "-march=armv7-a -mfloat-abi=softfp -mfpu=vfpv3 -DBYTE_ORDER=LITTLE_ENDIAN" 16 "armv7a-linux-androideabi" "-march=armv7-a" "arm" "armv7a" "eabi"
+  install_libvorbis_architecture "arm64-v8a" "-march=armv8-a -DBYTE_ORDER=LITTLE_ENDIAN" 21 "aarch64-linux-android" "" "aarch64" "aarch64" ""
+  install_libvorbis_architecture "x86" "-march=i686 -m32 -DBYTE_ORDER=LITTLE_ENDIAN" 16 "i686-linux-android" "" "i686" "i686" ""
+  install_libvorbis_architecture "x86_64" "-march=x86-64 -m64 -DBYTE_ORDER=LITTLE_ENDIAN" 21 "x86_64-linux-android" "" "x86_64" "x86_64" ""
 }
 
 

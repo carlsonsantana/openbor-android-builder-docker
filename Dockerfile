@@ -8,7 +8,7 @@ ARG APKTOOL_VERSION="2.12.1"
 
 # Install dependencies
 RUN apt update && apt upgrade -y && \
-  apt install -y curl unzip openjdk-17-jdk make file xz-utils python3 python3-distutils && \
+  apt install -y curl unzip openjdk-17-jdk make file xz-utils yasm automake libtool pkg-config patch && \
   apt-get clean -y && \
   apt-get autoremove -y && \
   apt-get autoclean -y && \
@@ -19,13 +19,15 @@ RUN mkdir /apktool && \
 
 # Copy OpenBOR repository
 COPY openbor /openbor
-COPY build_libs.sh /opt/build_libs.sh
 
 # Create version header file
 WORKDIR /openbor/engine
 RUN /bin/bash ./version.sh && \
   sed -i "s|org\.openbor\.engine|aaaaa.bbbbb.ccccc|g" /openbor/engine/android/app/build.gradle && \
   sed -i "s|\"Openbor\"|\"ZZZZZ\"|g" /openbor/engine/android/app/build.gradle
+
+COPY patches /opt/patches
+COPY build_libs.sh /opt/build_libs.sh
 
 # Create source builder
 WORKDIR /
