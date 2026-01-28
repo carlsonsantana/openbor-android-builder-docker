@@ -242,10 +242,49 @@ install_libvorbis() {
 }
 
 
+install_sdl_architecture() {
+  TOOLCHAIN_ARCHITECTURE="$1"
+  ANDROID_API=$2
+
+  cd /mylibs/
+  tar -xzf SDL2-2.0.10.tar.gz
+  cd SDL2-2.0.10/
+
+  mv include/SDL_config_android.h include/SDL_config.h
+  mkdir jni
+  echo "APP_ABI := $TOOLCHAIN_ARCHITECTURE" >> "jni/Application.mk"
+
+  $ANDROID_NDK/ndk-build NDK_PROJECT_PATH=. NDK_DEBUG=0 APP_BUILD_SCRIPT=./Android.mk APP_PLATFORM=android-$ANDROID_API
+
+  if [ -f "/openbor/engine/android/app/jni/openbor/lib/$TOOLCHAIN_ARCHITECTURE/libSDL2.so" ]; then
+    rm /openbor/engine/android/app/jni/openbor/lib/$TOOLCHAIN_ARCHITECTURE/libSDL2.so
+    rm /openbor/engine/android/app/jni/openbor/lib/$TOOLCHAIN_ARCHITECTURE/libhidapi.so
+  else
+    mkdir -p /openbor/engine/android/app/jni/openbor/lib/$TOOLCHAIN_ARCHITECTURE
+  fi
+  cp libs/$TOOLCHAIN_ARCHITECTURE/libSDL2.so /openbor/engine/android/app/jni/openbor/lib/$TOOLCHAIN_ARCHITECTURE/libSDL2.so
+  cp libs/$TOOLCHAIN_ARCHITECTURE/libhidapi.so /openbor/engine/android/app/jni/openbor/lib/$TOOLCHAIN_ARCHITECTURE/libhidapi.so
+
+  cd /mylibs/
+  rm -r /mylibs/SDL2-2.0.10/
+}
+
+install_sdl() {
+  cd /mylibs/
+  curl -L https://libsdl.org/release/SDL2-2.0.10.tar.gz --output SDL2-2.0.10.tar.gz
+
+  install_sdl_architecture "armeabi-v7a" 16
+  install_sdl_architecture "arm64-v8a" 21
+  install_sdl_architecture "x86" 16
+  install_sdl_architecture "x86_64" 21
+}
+
+
 install_libpng
 install_libvpx
 install_libogg
 install_libvorbis
+install_sdl
 
 
 cd /openbor/engine/android
