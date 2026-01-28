@@ -1,0 +1,28 @@
+--- misc.h	2018-03-19 17:08:57.000000000 -0300
++++ misc.h.new	2026-01-26 01:47:56.573702344 -0300
+@@ -41,7 +41,6 @@
+ #include <sys/types.h>
+ #endif
+ 
+-#if BYTE_ORDER==LITTLE_ENDIAN
+ union magic {
+   struct {
+     ogg_int32_t lo;
+@@ -49,17 +48,6 @@
+   } halves;
+   ogg_int64_t whole;
+ };
+-#endif 
+-
+-#if BYTE_ORDER==BIG_ENDIAN
+-union magic {
+-  struct {
+-    ogg_int32_t hi;
+-    ogg_int32_t lo;
+-  } halves;
+-  ogg_int64_t whole;
+-};
+-#endif
+ 
+ STIN ogg_int32_t MULT32(ogg_int32_t x, ogg_int32_t y) {
+   union magic magic;
