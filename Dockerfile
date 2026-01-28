@@ -24,7 +24,9 @@ COPY openbor /openbor
 WORKDIR /openbor/engine
 RUN /bin/bash ./version.sh && \
   sed -i "s|org\.openbor\.engine|aaaaa.bbbbb.ccccc|g" /openbor/engine/android/app/build.gradle && \
-  sed -i "s|\"Openbor\"|\"ZZZZZ\"|g" /openbor/engine/android/app/build.gradle
+  sed -i "s|\"Openbor\"|\"ZZZZZ\"|g" /openbor/engine/android/app/build.gradle && \
+  sed -i "s|abiFilters 'arm64-v8a', 'armeabi-v7a'|abiFilters 'arm64-v8a', 'armeabi-v7a', 'x86', 'x86_64'|g" /openbor/engine/android/app/build.gradle && \
+  sed -i "s|APP_ABI := armeabi-v7a arm64-v8a|APP_ABI := armeabi-v7a arm64-v8a x86 x86_64|g" /openbor/engine/android/app/jni/Application.mk
 
 COPY patches /opt/patches
 COPY build_libs.sh /opt/build_libs.sh
