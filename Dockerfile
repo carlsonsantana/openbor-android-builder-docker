@@ -1,4 +1,4 @@
-FROM debian:bullseye-20251117-slim as android-sdk-builder
+FROM debian:bullseye-20251117-slim AS android-sdk-builder
 
 # Build arguments
 ARG SDK_VERSION="9477386_latest"
@@ -85,13 +85,13 @@ VOLUME /output
 VOLUME /game_certificate.key
 
 # Environment variables
-ENV GAME_APK_NAME "com.mycompany.gamename"
-ENV GAME_NAME "Game Name"
-ENV GAME_VERSION_CODE "100"
-ENV GAME_VERSION_NAME "1.0.0"
-ENV GAME_KEYSTORE_PASSWORD ""
-ENV GAME_KEYSTORE_KEY_ALIAS ""
-ENV GAME_KEYSTORE_KEY_PASSWORD ""
+ENV GAME_APK_NAME="com.mycompany.gamename"
+ENV GAME_NAME="Game Name"
+ENV GAME_VERSION_CODE="100"
+ENV GAME_VERSION_NAME="1.0.0"
+ENV GAME_KEYSTORE_PASSWORD=""
+ENV GAME_KEYSTORE_KEY_ALIAS=""
+ENV GAME_KEYSTORE_KEY_PASSWORD=""
 
 # Run build
 WORKDIR /
