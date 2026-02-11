@@ -83,15 +83,15 @@ VOLUME /icon.png
 VOLUME /icon_background.png
 VOLUME /output
 VOLUME /game_certificate.key
+VOLUME /run/secrets/game_keystore_password
+VOLUME /run/secrets/game_keystore_key_alias
+VOLUME /run/secrets/game_keystore_key_password
 
 # Environment variables
 ENV GAME_APK_NAME="com.mycompany.gamename"
 ENV GAME_NAME="Game Name"
 ENV GAME_VERSION_CODE="100"
 ENV GAME_VERSION_NAME="1.0.0"
-ENV GAME_KEYSTORE_PASSWORD=""
-ENV GAME_KEYSTORE_KEY_ALIAS=""
-ENV GAME_KEYSTORE_KEY_PASSWORD=""
 
 # Run build
 WORKDIR /

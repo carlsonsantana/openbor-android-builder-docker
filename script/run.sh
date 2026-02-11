@@ -9,8 +9,9 @@ ICON_BASENAME="icon"
 
 source "/script/common.sh"
 
+init_keystore_variables
 remove_previous_build_files
-validate_environment_variables_filled
+validate_secrets_filled
 
 
 mipmap_resize_icon() {

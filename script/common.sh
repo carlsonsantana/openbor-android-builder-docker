@@ -9,21 +9,33 @@ OUTPUT_UNSIGNED_AAB_FILE="/output/$APP_BASENAME-unsigned.aab"
 OUTPUT_SIGNED_AAB_FILE="/output/$APP_BASENAME-signed.aab"
 TEMP_RESOURCES_AAB_PATH="/tmp/$APKTOOL_DECODED_PATH-res-aab"
 
+init_keystore_variables() {
+  if [ -f "/run/secrets/game_keystore_password" ]; then
+    export GAME_KEYSTORE_PASSWORD=$(cat /run/secrets/game_keystore_password)
+  fi
+  if [ -f "/run/secrets/game_keystore_key_alias" ]; then
+    export GAME_KEYSTORE_KEY_ALIAS=$(cat /run/secrets/game_keystore_key_alias)
+  fi
+  if [ -f "/run/secrets/game_keystore_key_password" ]; then
+    export GAME_KEYSTORE_KEY_PASSWORD=$(cat /run/secrets/game_keystore_key_password)
+  fi
+}
+
 remove_previous_build_files() {
   rm -f "$TEMP_UNSIGNED_APK_FILE" "$TEMP_ALIGNED_APK_FILE" "$TEMP_UNSIGNED_AAB_FILE"
   rm -fr /tmp/apk /tmp/res.zip /tmp/_base.zip /tmp/base /tmp/base.zip "$TEMP_RESOURCES_AAB_PATH"
   rm -f "$OUTPUT_ALIGNED_APK_FILE" "$OUTPUT_SIGNED_APK_FILE" "$OUTPUT_UNSIGNED_AAB_FILE" "$OUTPUT_SIGNED_AAB_FILE"
 }
 
-validate_environment_variables_filled() {
+validate_secrets_filled() {
   if [ -f "/game_certificate.key" ]; then
     if [ -z "$GAME_KEYSTORE_PASSWORD" ] || [ -z "$GAME_KEYSTORE_KEY_ALIAS" ] || [ -z "$GAME_KEYSTORE_KEY_PASSWORD" ]; then
       echo "ERROR: Partial keystore configuration detected."
       echo "You must provide ALL THREE variables, when pass '/game_certificate.key' VOLUME."
-      echo "Missing values for: "
-      [ -z "$GAME_KEYSTORE_PASSWORD" ] && echo "- GAME_KEYSTORE_PASSWORD"
-      [ -z "$GAME_KEYSTORE_KEY_ALIAS" ] && echo "- GAME_KEYSTORE_KEY_ALIAS"
-      [ -z "$GAME_KEYSTORE_KEY_PASSWORD" ] && echo "- GAME_KEYSTORE_KEY_PASSWORD"
+      echo "Missing secrets: "
+      [ -z "$GAME_KEYSTORE_PASSWORD" ] && echo "- /run/secrets/game_keystore_password"
+      [ -z "$GAME_KEYSTORE_KEY_ALIAS" ] && echo "- /run/secrets/game_keystore_key_alias"
+      [ -z "$GAME_KEYSTORE_KEY_PASSWORD" ] && echo "- /run/secrets/game_keystore_key_password"
       exit 1
     fi
   fi
