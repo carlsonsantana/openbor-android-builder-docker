@@ -20,12 +20,12 @@ mipmap_resize_icon() {
   OUTPUT_PATH_ICON_FOREGROUND="/openbor-android/res/$2/ic_launcher_foreground.png"
   OUTPUT_PATH_ICON_MONOCHROME="/openbor-android/res/$2/ic_launcher_monochrome.png"
 
-  TEMP_CIRCLE_MASK=$(mktemp /tmp/XXXXXXX.png)
-  TEMP_RESIZED_IMAGE=$(mktemp /tmp/XXXXXXX.png)
+  TEMP_CIRCLE_MASK=$(mktemp /tmp/XXXXXX)
+  TEMP_RESIZED_IMAGE=$(mktemp /tmp/XXXXXX)
 
-  magick -size $1"x"$1 xc:none -fill white -draw "roundrectangle 0,0,$1,$1,$1,$1" $TEMP_CIRCLE_MASK
-  magick /icon.png -resize $1"x"$1 $TEMP_RESIZED_IMAGE
-  magick $TEMP_RESIZED_IMAGE -alpha Set $TEMP_CIRCLE_MASK -compose DstIn -composite $OUTPUT_PATH_ICON_ROUND && oxipng -o 6 --strip safe $OUTPUT_PATH_ICON_ROUND
+  magick -size $1"x"$1 xc:none -fill white -draw "roundrectangle 0,0,$1,$1,$1,$1" PNG:$TEMP_CIRCLE_MASK
+  magick /icon.png -resize $1"x"$1 PNG:$TEMP_RESIZED_IMAGE
+  magick PNG:$TEMP_RESIZED_IMAGE -alpha Set PNG:$TEMP_CIRCLE_MASK -compose DstIn -composite $OUTPUT_PATH_ICON_ROUND && oxipng -o 6 --strip safe $OUTPUT_PATH_ICON_ROUND
 
   magick /icon_background.png -resize $1"x"$1 $OUTPUT_PATH_ICON_BACKGROUND && oxipng -o 6 --strip safe $OUTPUT_PATH_ICON_BACKGROUND
   magick /icon.png -resize $1"x"$1 $OUTPUT_PATH_ICON_FOREGROUND && oxipng -o 6 --strip safe $OUTPUT_PATH_ICON_FOREGROUND
