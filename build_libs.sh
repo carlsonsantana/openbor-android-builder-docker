@@ -14,7 +14,7 @@ install_libpng_architecture() {
   TOOLCHAIN_PATH="/mylibs/$TOOLCHAIN_ARCHITECTURE-toolchain"
 
   cd /mylibs/
-  tar -xf libpng-1.6.36.tar.xz
+  tar -xzf v1.6.36.tar.gz
   cd libpng-1.6.36
 
   /android-sdk/cmake/3.22.1/bin/cmake . -Bbuild -DCMAKE_BUILD_TYPE=RelWithDebInfo -DBUILD_SHARED_LIBS=OFF -DCMAKE_C_FLAGS="-no-integrated-as -g0 -O2 -fPIC $ADDITIONAL_ARCHITECTURE_FLAGS -I$TOOLCHAIN_PATH/include -I$ANDROID_NDK/sources/android/cpufeatures" -DCMAKE_INSTALL_LIBDIR=lib -DCMAKE_AR=$ANDROID_NDK/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-ar -DCMAKE_NM=$ANDROID_NDK/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-nm -DCMAKE_RANLIB=$ANDROID_NDK/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-ranlib  -DCMAKE_INSTALL_PREFIX=$TOOLCHAIN_PATH -DCMAKE_SYSTEM_NAME=Android -DCMAKE_PREFIX_PATH=$TOOLCHAIN_PATH -DCMAKE_ANDROID_ARCH_ABI=$TOOLCHAIN_ARCHITECTURE -DCMAKE_ANDROID_API=$ANDROID_API -DCMAKE_FIND_ROOT_PATH=$TOOLCHAIN_PATH -DPNG_SHARED=OFF -DPNG_TESTS=OFF
@@ -36,7 +36,7 @@ install_libpng_architecture() {
 
 install_libpng() {
   cd /mylibs/
-  curl -L https://sitsa.dl.sourceforge.net/project/libpng/libpng16/older-releases/1.6.36/libpng-1.6.36.tar.xz?viasf=1 --output /mylibs/libpng-1.6.36.tar.xz
+  curl -L https://github.com/pnggroup/libpng/archive/refs/tags/v1.6.36.tar.gz --output /mylibs/v1.6.36.tar.gz
 
   install_libpng_architecture "armeabi-v7a" "-march=armv7-a -mfloat-abi=softfp -mfpu=vfpv3" 16
   install_libpng_architecture "arm64-v8a" "-march=armv8-a" 21
