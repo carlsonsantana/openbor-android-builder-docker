@@ -34,7 +34,7 @@ RUN export ANDROID_SDK_ROOT=/android-sdk && \
   mkdir -p /android-sdk/cmdline-tools && \
   mv cmdline-tools /android-sdk/cmdline-tools/latest && \
   cd /android-sdk/cmdline-tools/latest/bin && \
-  echo "y" | ./sdkmanager --install "build-tools;36.0.0" "platform-tools" "platforms;android-36" "tools" "ndk;${NDK_VERSION}" "cmake;${CMAKE_VERSION}" && \
+  echo "y" | ./sdkmanager --install "build-tools;36.0.0" "platform-tools" "platforms;android-36" "ndk;${NDK_VERSION}" "cmake;${CMAKE_VERSION}" && \
   cd /openbor/engine/android && \
   keytool -genkey -noprompt -v \
     -keystore game_certificate.jks \
@@ -59,7 +59,8 @@ RUN export ANDROID_SDK_ROOT=/android-sdk && \
 FROM alpine:3.23.3
 
 # Install dependencies
-RUN apk --update --no-cache add curl openjdk17-jdk imagemagick oxipng abseil-cpp-hash gtest libprotobuf fmt && \
+RUN apk --update --no-cache add curl openjdk17-jdk imagemagick oxipng abseil-cpp-hash && \
+  apk --update --no-cache add gtest libprotobuf fmt --repository=https://dl-cdn.alpinelinux.org/alpine/edge/main/ && \
   apk --update --no-cache add android-build-tools --repository=https://dl-cdn.alpinelinux.org/alpine/edge/testing/
 RUN curl -L "https://github.com/carlsonsantana/signmyapp/releases/download/1.1.0/signmyapp.jar" --output /opt/signmyapp.jar && \
   curl -L "https://github.com/google/bundletool/releases/download/1.18.3/bundletool-all-1.18.3.jar" --output /opt/bundletool.jar && \
