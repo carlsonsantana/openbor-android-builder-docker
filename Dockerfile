@@ -22,7 +22,10 @@ RUN /bin/bash ./version.sh && \
   sed -i "s|abiFilters 'arm64-v8a', 'armeabi-v7a'|abiFilters 'arm64-v8a', 'armeabi-v7a', 'x86', 'x86_64'|g" /openbor/engine/android/app/build.gradle && \
   sed -i "s|APP_ABI := armeabi-v7a arm64-v8a|APP_ABI := armeabi-v7a arm64-v8a x86 x86_64|g" /openbor/engine/android/app/jni/Application.mk && \
   awk '/include \$\(BUILD_SHARED_LIBRARY\)/ && !done { print "# 16 KB page size is 64-bit only: align libopenbor.so LOAD segments to 16 KB for arm64-v8a/x86_64 only (NDK r21 defaults to 4 KB)"; print "ifneq (,$(filter arm64-v8a x86_64,$(TARGET_ARCH_ABI)))"; print "LOCAL_LDFLAGS += -Wl,-z,max-page-size=16384"; print "endif"; done=1 } { print }' /openbor/engine/android/app/jni/openbor/Android.mk > /tmp/openbor_Android.mk && \
-  mv /tmp/openbor_Android.mk /openbor/engine/android/app/jni/openbor/Android.mk
+  mv /tmp/openbor_Android.mk /openbor/engine/android/app/jni/openbor/Android.mk && \
+  sed -i "s|minifyEnabled false|minifyEnabled true|g" /openbor/engine/android/app/build.gradle && \
+  sed -i "s|proguard-android.txt|proguard-android-optimize.txt|g" /openbor/engine/android/app/build.gradle && \
+  printf '\n# Build-time keep rules (submodule left untouched).\n# C code calls these classes/methods by name via JNI; R8 cannot see the call sites.\n-keep class org.libsdl.app.** { *; }\n-keep class org.openbor.engine.** { *; }\n-keepclasseswithmembernames class * { native <methods>; }\n' >> /openbor/engine/android/app/proguard-rules.pro
 
 COPY patches /opt/patches
 COPY build_libs.sh /opt/build_libs.sh
@@ -49,7 +52,7 @@ RUN export ANDROID_SDK_ROOT=/android-sdk && \
   touch /openbor/engine/android/app/src/main/assets/bor.pak && \
   bash /opt/build_libs.sh && \
   ./gradlew assembleRelease --no-daemon --no-build-cache && \
-  java -jar /apktool/apktool.jar d /openbor/engine/android/app/build/outputs/apk/release/OpenBOR.apk -o /openbor-android && \
+  java -jar /apktool/apktool.jar d -s /openbor/engine/android/app/build/outputs/apk/release/OpenBOR.apk -o /openbor-android && \
   mkdir /openbor-android/res/mipmap-ldpi && \
   rm keystore.properties game_certificate.jks /openbor/engine/android/app/build/outputs/apk/release/OpenBOR.apk && \
   rm /openbor/engine/android/app/src/main/assets/bor.pak && \
