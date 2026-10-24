@@ -60,13 +60,44 @@ RUN export ANDROID_SDK_ROOT=/android-sdk && \
   unset ANDROID_SDK_ROOT
 
 
+# Build aapt2 and zipalign from source (same Alpine tag as the runtime image, so the
+# binaries link against the exact runtime library ABI and no edge repository is needed)
+FROM alpine:3.23.3 AS build-tools-builder
+
+# Pinned to the same commit Alpine's android-build-tools package uses (tracks android-16.0.0_r2)
+ARG ANDROID_BUILD_TOOLS_COMMIT="c1266c5c3bc85ef9aa3aca61d0e67d547fe99252"
+
+# Build dependencies (mirrors Alpine's makedepends) plus the C/C++ toolchain
+RUN apk --update --no-cache add \
+  build-base git cmake samurai bison flex pkgconf \
+  linux-headers bsd-compat-headers \
+  fmt-dev gtest-dev expat-dev libpng-dev protobuf-dev
+
+# Fetch the pinned source with its AOSP submodules (shallow)
+RUN git clone https://github.com/termux/android-build-tools.git /src && \
+  cd /src && \
+  git checkout "$ANDROID_BUILD_TOOLS_COMMIT" && \
+  git submodule update --init --recursive --depth 1
+
+# Build only the two tools we actually use (skips aapt and aidl)
+RUN cd /src && \
+  cmake -B build -G Ninja \
+    -DCMAKE_BUILD_TYPE=None \
+    -DANDROID_BUILD_TOOLS_MUSL_LIBC=ON \
+    -DANDROID_BUILD_TOOLS_DEV_MODE=ON && \
+  cmake --build build --target aapt2 zipalign && \
+  mkdir /out && \
+  find build -type f -name aapt2 -exec cp {} /out/aapt2 \; && \
+  find build -type f -name zipalign -exec cp {} /out/zipalign \; && \
+  strip /out/aapt2 /out/zipalign
+
+
 # Another image with only used resources
 FROM alpine:3.23.3
 
-# Install dependencies
-RUN apk --update --no-cache add curl openjdk17-jdk imagemagick oxipng abseil-cpp-hash && \
-  apk --update --no-cache add gtest libprotobuf fmt --repository=https://dl-cdn.alpinelinux.org/alpine/edge/main/ && \
-  apk --update --no-cache add android-build-tools --repository=https://dl-cdn.alpinelinux.org/alpine/edge/testing/
+# Install dependencies (all from the default 3.23 main repository)
+RUN apk --update --no-cache add curl openjdk17-jdk imagemagick oxipng \
+  fmt libprotobuf expat libpng
 RUN curl -L "https://github.com/carlsonsantana/signmyapp/releases/download/1.1.0/signmyapp.jar" --output /opt/signmyapp.jar && \
   curl -L "https://github.com/google/bundletool/releases/download/1.18.3/bundletool-all-1.18.3.jar" --output /opt/bundletool.jar && \
   curl -L "https://github.com/Sable/android-platforms/raw/f2ca864c44f277bbc09afda0ba36437ce22105f0/android-36/android.jar" --output /opt/android.jar
@@ -75,6 +106,8 @@ RUN curl -L "https://github.com/carlsonsantana/signmyapp/releases/download/1.1.0
 RUN mkdir /apktool
 COPY --from=android-sdk-builder /apktool/apktool.jar /apktool/apktool.jar
 COPY --from=android-sdk-builder /openbor-android /openbor-android
+COPY --from=build-tools-builder /out/aapt2 /usr/bin/aapt2
+COPY --from=build-tools-builder /out/zipalign /usr/bin/zipalign
 
 # Volumes
 RUN mkdir /output
