@@ -21,7 +21,7 @@ RUN /bin/bash ./version.sh && \
   sed -i "s|\"Openbor\"|\"ZZZZZ\"|g" /openbor/engine/android/app/build.gradle && \
   sed -i "s|abiFilters 'arm64-v8a', 'armeabi-v7a'|abiFilters 'arm64-v8a', 'armeabi-v7a', 'x86', 'x86_64'|g" /openbor/engine/android/app/build.gradle && \
   sed -i "s|APP_ABI := armeabi-v7a arm64-v8a|APP_ABI := armeabi-v7a arm64-v8a x86 x86_64|g" /openbor/engine/android/app/jni/Application.mk && \
-  awk '/include \$\(BUILD_SHARED_LIBRARY\)/ && !done { print "# 16 KB page size is 64-bit only: align libopenbor.so LOAD segments to 16 KB for arm64-v8a/x86_64 only (NDK r21 defaults to 4 KB)"; print "ifneq (,$(filter arm64-v8a x86_64,$(TARGET_ARCH_ABI)))"; print "LOCAL_LDFLAGS += -Wl,-z,max-page-size=16384"; print "endif"; done=1 } { print }' /openbor/engine/android/app/jni/openbor/Android.mk > /tmp/openbor_Android.mk && \
+  awk '/include \$\(BUILD_SHARED_LIBRARY\)/ && !done { print "# 16 KB page size is 64-bit only: align libopenbor.so LOAD segments to 16 KB for arm64-v8a/x86_64 only (NDK r21 defaults to 4 KB)"; print "ifneq (,$(filter arm64-v8a x86_64,$(TARGET_ARCH_ABI)))"; print "LOCAL_LDFLAGS += -Wl,-z,max-page-size=16384 -Wl,-z,common-page-size=16384"; print "endif"; done=1 } { print }' /openbor/engine/android/app/jni/openbor/Android.mk > /tmp/openbor_Android.mk && \
   mv /tmp/openbor_Android.mk /openbor/engine/android/app/jni/openbor/Android.mk && \
   sed -i "s|minifyEnabled false|minifyEnabled true|g" /openbor/engine/android/app/build.gradle && \
   sed -i "s|proguard-android.txt|proguard-android-optimize.txt|g" /openbor/engine/android/app/build.gradle && \

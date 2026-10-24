@@ -281,9 +281,9 @@ install_sdl() {
   curl -L https://libsdl.org/release/SDL2-2.0.10.tar.gz --output SDL2-2.0.10.tar.gz
 
   install_sdl_architecture "armeabi-v7a" 16
-  install_sdl_architecture "arm64-v8a" 21 "-Wl,-z,max-page-size=16384"
+  install_sdl_architecture "arm64-v8a" 21 "-Wl,-z,max-page-size=16384 -Wl,-z,common-page-size=16384"
   install_sdl_architecture "x86" 16
-  install_sdl_architecture "x86_64" 21 "-Wl,-z,max-page-size=16384"
+  install_sdl_architecture "x86_64" 21 "-Wl,-z,max-page-size=16384 -Wl,-z,common-page-size=16384"
 }
 
 
