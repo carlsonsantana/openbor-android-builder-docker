@@ -152,6 +152,10 @@ For a detailed comparison, see the official [Android App Bundle documentation](h
 * **The game doesn't start or content is missing.** Make sure the `/bor.pak` volume points at your compiled OpenBOR `.pak` file, not at the folder that contains it.
 * **The build can't be installed on the device.** An unsigned APK cannot be installed; use the [Signed build](#signed-build).
 
+## Android ports made with this
+
+* [OB - Standalone](https://play.google.com/store/apps/details?id=br.com.carlsonsantana.gamedev.ob_standalone_game) — a game of mine, published on Google Play.
+
 ## Source
 
 The source code is available on [GitHub](https://github.com/carlsonsantana/openbor-android-docker).
