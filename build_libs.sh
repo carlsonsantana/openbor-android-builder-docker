@@ -245,6 +245,7 @@ install_libvorbis() {
 install_sdl_architecture() {
   TOOLCHAIN_ARCHITECTURE="$1"
   ANDROID_API=$2
+  ADDITIONAL_LDFLAGS="$3"
 
   cd /mylibs/
   tar -xzf SDL2-2.0.10.tar.gz
@@ -253,6 +254,12 @@ install_sdl_architecture() {
   mv include/SDL_config_android.h include/SDL_config.h
   mkdir jni
   echo "APP_ABI := $TOOLCHAIN_ARCHITECTURE" >> "jni/Application.mk"
+  # When extra linker flags are given, apply them to the libSDL2.so/libhidapi.so link. 16 KB
+  # page alignment is a 64-bit-only requirement, so only the 64-bit ABIs pass it here; the
+  # 32-bit ABIs pass nothing and keep NDK r21's default 4 KB alignment.
+  if [ -n "$ADDITIONAL_LDFLAGS" ]; then
+    echo "APP_LDFLAGS += $ADDITIONAL_LDFLAGS" >> "jni/Application.mk"
+  fi
 
   $ANDROID_NDK/ndk-build NDK_PROJECT_PATH=. NDK_DEBUG=0 APP_BUILD_SCRIPT=./Android.mk APP_PLATFORM=android-$ANDROID_API
 
@@ -274,9 +281,9 @@ install_sdl() {
   curl -L https://libsdl.org/release/SDL2-2.0.10.tar.gz --output SDL2-2.0.10.tar.gz
 
   install_sdl_architecture "armeabi-v7a" 16
-  install_sdl_architecture "arm64-v8a" 21
+  install_sdl_architecture "arm64-v8a" 21 "-Wl,-z,max-page-size=16384 -Wl,-z,common-page-size=16384"
   install_sdl_architecture "x86" 16
-  install_sdl_architecture "x86_64" 21
+  install_sdl_architecture "x86_64" 21 "-Wl,-z,max-page-size=16384 -Wl,-z,common-page-size=16384"
 }
 
 

@@ -20,7 +20,12 @@ RUN /bin/bash ./version.sh && \
   sed -i "s|org\.openbor\.engine|aaaaa.bbbbb.ccccc|g" /openbor/engine/android/app/build.gradle && \
   sed -i "s|\"Openbor\"|\"ZZZZZ\"|g" /openbor/engine/android/app/build.gradle && \
   sed -i "s|abiFilters 'arm64-v8a', 'armeabi-v7a'|abiFilters 'arm64-v8a', 'armeabi-v7a', 'x86', 'x86_64'|g" /openbor/engine/android/app/build.gradle && \
-  sed -i "s|APP_ABI := armeabi-v7a arm64-v8a|APP_ABI := armeabi-v7a arm64-v8a x86 x86_64|g" /openbor/engine/android/app/jni/Application.mk
+  sed -i "s|APP_ABI := armeabi-v7a arm64-v8a|APP_ABI := armeabi-v7a arm64-v8a x86 x86_64|g" /openbor/engine/android/app/jni/Application.mk && \
+  awk '/include \$\(BUILD_SHARED_LIBRARY\)/ && !done { print "# 16 KB page size is 64-bit only: align libopenbor.so LOAD segments to 16 KB for arm64-v8a/x86_64 only (NDK r21 defaults to 4 KB)"; print "ifneq (,$(filter arm64-v8a x86_64,$(TARGET_ARCH_ABI)))"; print "LOCAL_LDFLAGS += -Wl,-z,max-page-size=16384 -Wl,-z,common-page-size=16384"; print "endif"; done=1 } { print }' /openbor/engine/android/app/jni/openbor/Android.mk > /tmp/openbor_Android.mk && \
+  mv /tmp/openbor_Android.mk /openbor/engine/android/app/jni/openbor/Android.mk && \
+  sed -i "s|minifyEnabled false|minifyEnabled true|g" /openbor/engine/android/app/build.gradle && \
+  sed -i "s|proguard-android.txt|proguard-android-optimize.txt|g" /openbor/engine/android/app/build.gradle && \
+  printf '\n# Build-time keep rules (submodule left untouched).\n# C code calls these classes/methods by name via JNI; R8 cannot see the call sites.\n-keep class org.libsdl.app.** { *; }\n-keep class org.openbor.engine.** { *; }\n-keepclasseswithmembernames class * { native <methods>; }\n' >> /openbor/engine/android/app/proguard-rules.pro
 
 COPY patches /opt/patches
 COPY build_libs.sh /opt/build_libs.sh
@@ -34,7 +39,7 @@ RUN export ANDROID_SDK_ROOT=/android-sdk && \
   mkdir -p /android-sdk/cmdline-tools && \
   mv cmdline-tools /android-sdk/cmdline-tools/latest && \
   cd /android-sdk/cmdline-tools/latest/bin && \
-  echo "y" | ./sdkmanager --install "build-tools;36.0.0" "platform-tools" "platforms;android-36" "tools" "ndk;${NDK_VERSION}" "cmake;${CMAKE_VERSION}" && \
+  echo "y" | ./sdkmanager --install "build-tools;36.0.0" "platform-tools" "platforms;android-36" "ndk;${NDK_VERSION}" "cmake;${CMAKE_VERSION}" && \
   cd /openbor/engine/android && \
   keytool -genkey -noprompt -v \
     -keystore game_certificate.jks \
@@ -47,7 +52,7 @@ RUN export ANDROID_SDK_ROOT=/android-sdk && \
   touch /openbor/engine/android/app/src/main/assets/bor.pak && \
   bash /opt/build_libs.sh && \
   ./gradlew assembleRelease --no-daemon --no-build-cache && \
-  java -jar /apktool/apktool.jar d /openbor/engine/android/app/build/outputs/apk/release/OpenBOR.apk -o /openbor-android && \
+  java -jar /apktool/apktool.jar d -s /openbor/engine/android/app/build/outputs/apk/release/OpenBOR.apk -o /openbor-android && \
   mkdir /openbor-android/res/mipmap-ldpi && \
   rm keystore.properties game_certificate.jks /openbor/engine/android/app/build/outputs/apk/release/OpenBOR.apk && \
   rm /openbor/engine/android/app/src/main/assets/bor.pak && \
@@ -55,12 +60,44 @@ RUN export ANDROID_SDK_ROOT=/android-sdk && \
   unset ANDROID_SDK_ROOT
 
 
+# Build aapt2 and zipalign from source (same Alpine tag as the runtime image, so the
+# binaries link against the exact runtime library ABI and no edge repository is needed)
+FROM alpine:3.23.3 AS build-tools-builder
+
+# Pinned to the same commit Alpine's android-build-tools package uses (tracks android-16.0.0_r2)
+ARG ANDROID_BUILD_TOOLS_COMMIT="c1266c5c3bc85ef9aa3aca61d0e67d547fe99252"
+
+# Build dependencies (mirrors Alpine's makedepends) plus the C/C++ toolchain
+RUN apk --update --no-cache add \
+  build-base git cmake samurai bison flex pkgconf \
+  linux-headers bsd-compat-headers \
+  fmt-dev gtest-dev expat-dev libpng-dev protobuf-dev
+
+# Fetch the pinned source with its AOSP submodules (shallow)
+RUN git clone https://github.com/termux/android-build-tools.git /src && \
+  cd /src && \
+  git checkout "$ANDROID_BUILD_TOOLS_COMMIT" && \
+  git submodule update --init --recursive --depth 1
+
+# Build only the two tools we actually use (skips aapt and aidl)
+RUN cd /src && \
+  cmake -B build -G Ninja \
+    -DCMAKE_BUILD_TYPE=None \
+    -DANDROID_BUILD_TOOLS_MUSL_LIBC=ON \
+    -DANDROID_BUILD_TOOLS_DEV_MODE=ON && \
+  cmake --build build --target aapt2 zipalign && \
+  mkdir /out && \
+  find build -type f -name aapt2 -exec cp {} /out/aapt2 \; && \
+  find build -type f -name zipalign -exec cp {} /out/zipalign \; && \
+  strip /out/aapt2 /out/zipalign
+
+
 # Another image with only used resources
 FROM alpine:3.23.3
 
-# Install dependencies
-RUN apk --update --no-cache add curl openjdk17-jdk imagemagick oxipng abseil-cpp-hash gtest libprotobuf fmt && \
-  apk --update --no-cache add android-build-tools --repository=https://dl-cdn.alpinelinux.org/alpine/edge/testing/
+# Install dependencies (all from the default 3.23 main repository)
+RUN apk --update --no-cache add curl openjdk17-jdk imagemagick oxipng \
+  fmt libprotobuf expat libpng
 RUN curl -L "https://github.com/carlsonsantana/signmyapp/releases/download/1.1.0/signmyapp.jar" --output /opt/signmyapp.jar && \
   curl -L "https://github.com/google/bundletool/releases/download/1.18.3/bundletool-all-1.18.3.jar" --output /opt/bundletool.jar && \
   curl -L "https://github.com/Sable/android-platforms/raw/f2ca864c44f277bbc09afda0ba36437ce22105f0/android-36/android.jar" --output /opt/android.jar
@@ -69,6 +106,8 @@ RUN curl -L "https://github.com/carlsonsantana/signmyapp/releases/download/1.1.0
 RUN mkdir /apktool
 COPY --from=android-sdk-builder /apktool/apktool.jar /apktool/apktool.jar
 COPY --from=android-sdk-builder /openbor-android /openbor-android
+COPY --from=build-tools-builder /out/aapt2 /usr/bin/aapt2
+COPY --from=build-tools-builder /out/zipalign /usr/bin/zipalign
 
 # Volumes
 RUN mkdir /output
